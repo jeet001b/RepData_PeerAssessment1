@@ -37,7 +37,7 @@ set1<- aggregate(steps~date,set, sum)
 
 For the second part we have to make a histogram on the previous aggregated data we got.
 ```{r}
-hist(set1$steps,breaks = 10, xlab = "Steps Per Day",
+hist(set1$steps,breaks = 20, xlab = "Steps Per Day",
      main = "Number of Steps taken each day", col = "pink")
 ```
 
