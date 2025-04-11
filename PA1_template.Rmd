@@ -4,22 +4,167 @@ output:
   html_document:
     keep_md: true
 ---
+Author: Jeet Bhadouria
 
+This project analyzes data from a personal activity monitor that recorded the number of steps taken at 5-minute intervals over two months (October–November 2012). The goal is to explore activity patterns using reproducible data analysis.
+
+The data set includes:
+
+Steps: Number of steps in each 5-minute interval
+
+Date: The date of recording
+
+Interval: Identifier for each 5-minute time slot
 
 ## Loading and preprocessing the data
+``` {r Getting data, echo = TRUE}
+data<- read.csv("~/Documents/activity.csv", colClasses = c("numeric", "Date", "numeric"))
+# having a glimpse of structure of our loaded data
+summary(data)
+```
+Removing NA
 
+```{r}
+set<- data[!is.na(data),]
+```
+# Question 1:
 
+For this part we have to calculate the total number of steps taken each day.
+
+```{r}
+set1<- aggregate(steps~date,set, sum)
+```
+
+For the second part we have to make a histogram on the previous aggregated data we got.
+```{r}
+hist(set1$steps,breaks = 10, xlab = "Steps Per Day",
+     main = "Number of Steps taken each day", col = "pink")
+```
 
 ## What is mean total number of steps taken per day?
 
+At last we need to calculate and report the mean and median of the above data
 
-
+```{r, message= FALSE}
+library(dplyr)
+sort_set<-set1%>% 
+  summarise(mean = mean(steps), median = median(steps))
+```
 ## What is the average daily activity pattern?
 
+# Question 2:
 
+In the first part we need to make a time series plot;
 
+```{r}
+stepint<- aggregate(steps~interval, data, mean)
+plot(stepint$interval, stepint$steps, 
+     type = "l", lwd = 2,
+     main = "Avg Time series plot", 
+     xlab = "Intervals of 5-mins",
+     ylab = "Average Steps")
+```
+For the second part we need to return the maximum value and the point of interval from data
+
+```{r}
+stepint[grep(max(stepint$steps), stepint$steps),]
+```
 ## Imputing missing values
 
+# Question 3:
 
+For this part we need to calculate the total number of NA values in each row
+
+```{r, message = FALSE}
+library(dplyr)
+data%>%
+  summarise(total_number_of_NA = sum(is.na(data)))
+```
+For the second part we need to impute the average step counts in place of NAs
+
+```{r}
+set2<- data
+for (i in 1:nrow(set2)) {
+  if(is.na(data[i,1])==TRUE){
+    set2[i,1]<- stepint[stepint$interval %in% set2[i,3], 2]
+  }
+}
+```
+
+For this part we need to create a copy of original data set without any filtering of NAs,then making the histogram out of that untouched data
+
+```{r}
+set3<- aggregate(steps~date, set2, sum)
+hist(set3$steps, breaks = 20, xlab = "Steps Per Day", 
+     main = "Number of Steps taken each day", col = "skyblue")
+```
+
+In this part we need to find out whether there is the difference in the output from average and median of the steps based on the date or not:
+
+Process:
+
+```{r}
+sort_set2<- set3%>%
+  summarise(Avgsteps = mean(steps), centralsteps = median(steps))
+```
+
+CONCLUSION: With this we got our answer that the both methods of execution will lead us to a same output
+
+At last we are asked to compare the first data of first question and the third question through histogram:
+
+```{r}
+par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+#from 1st data:
+hist(set1$steps,breaks = 20, xlab = "Steps Per Day(Q1)",ylim = c(0,20),
+     col = "pink", main = NULL)
+#from question 3rd data:
+hist(set3$steps, breaks = 20, xlab = "Steps Per Day(Q3)",ylim = c(0,20),
+    col = "skyblue",main = NULL)
+#Giving title to histogram
+mtext("Steps per Day: Without vs With Imputed Values", outer = TRUE, cex = 1.3)
+```
+
+Conclusion: By analyzing our comparative plot we get as an output we can see how imputing the NA values with the values have changed the number of frequencies as it created much our data much dense comparatively just ignoring the NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+# Question 4:
+
+We are asked to make new variable to store whether the date is weekday or weekend day
+
+```{r}
+set4<-data
+# getting the days name and storing it in to new variable
+set4$days<- weekdays(set4$date)
+# creating a new variable of character class
+set4$level<- as.character(rep(0, times = nrow(set4)))
+#creating a loop to get weekdays and weekends and storing it to the empty variable weve created in the previous step
+for(i in 1:nrow(set4)){
+  if(set4[i,4] %in% c("Saturday", "Sunday")){
+    set4[i,5]<- "Weekend"
+  }else{
+    set4[i,5]<- "Weekday"
+  }
+}
+# preview of the data
+set4$level<- as.factor(set4$level)
+table(set4$level)
+```
+
+For this part we are asked to make a time series plot of average steps per 5-min interval, seperately for weekdays and weekends
+
+```{r}
+# Taking out weekdays and weekends to plot them seperatly
+weekday<- set4[set4$level == "Weekday",]
+weekend<- set4[set4$level == "Weekend",]
+# taking the average of average by taking interval as independent variable
+avg_weekday<- aggregate(steps~interval, weekday, mean)
+avg_weekend<- aggregate(steps~interval, weekend, mean)
+#creating a time series plot
+par(mfrow=c(2,1),mar=c(4,4.1,3,2.1))
+plot(avg_weekday$interval, avg_weekday$steps, type = "l", xlab = "Interval", ylab = "Steps", main = "Steps taken during Weekdays", col = "green")      
+plot(avg_weekend$interval, avg_weekend$steps, type = "l", xlab = "Interval", ylab = "Steps", main = "Steps taken during Weekends", col = "blue") 
+```
+
+Now that all the questions and tasks are done, we can finally wrap up our project.
+
+THANK YOU!!!
